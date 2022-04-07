@@ -35,7 +35,7 @@ class Servidor:
             # A flag SYN estar setada significa que é um cliente tentando estabelecer uma conexão nova
             # TODO: talvez você precise passar mais coisas para o construtor de conexão
             conexao = self.conexoes[id_conexao] = Conexao(self, id_conexao)
-            # TODO: você precisa fazer o handshake aceitando a conexão. Escolha se você acha melhor
+            # TODO você precisa fazer o handshake aceitando a conexão. Escolha se você acha melhor
             # fazer aqui mesmo ou dentro da classe Conexao.
             if self.callback:
                 self.callback(conexao)
@@ -60,6 +60,11 @@ class Conexao:
         print('Este é um exemplo de como fazer um timer')
 
     def _rdt_rcv(self, seq_no, ack_no, flags, payload):
+        print('ON _rdt_rcv @@@@@@@@@@@@@@')
+        print('seq_no', seq_no)
+        print('ack_no', ack_no)
+        print('flags', flags)
+        print('payload', payload)
         # TODO: trate aqui o recebimento de segmentos provenientes da camada de rede.
         # Chame self.callback(self, dados) para passar dados para a camada de aplicação após
         # garantir que eles não sejam duplicados e que tenham sido recebidos em ordem.
