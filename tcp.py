@@ -1,6 +1,8 @@
 import asyncio
 from tcputils import *
+import os, sys
 
+get_random_int = lambda: int.from_bytes(os.urandom(2), sys.byteorder)
 
 class Servidor:
     def __init__(self, rede, porta):
@@ -17,6 +19,7 @@ class Servidor:
         """
         self.callback = callback
 
+    # saida do ip e entrada do tcp
     def _rdt_rcv(self, src_addr, dst_addr, segment):
         src_port, dst_port, seq_no, ack_no, \
             flags, window_size, checksum, urg_ptr = read_header(segment)
@@ -32,11 +35,20 @@ class Servidor:
         id_conexao = (src_addr, src_port, dst_addr, dst_port)
 
         if (flags & FLAGS_SYN) == FLAGS_SYN:
+            print('on init connection')
             # A flag SYN estar setada significa que é um cliente tentando estabelecer uma conexão nova
+
             # TODO: talvez você precise passar mais coisas para o construtor de conexão
             conexao = self.conexoes[id_conexao] = Conexao(self, id_conexao)
-            # TODO você precisa fazer o handshake aceitando a conexão. Escolha se você acha melhor
-            # fazer aqui mesmo ou dentro da classe Conexao.
+
+            resp_seq_no = get_random_int()
+            resp_ack_no = seq_no + 1
+            resp_segment = make_header(dst_port, src_port, resp_seq_no, resp_ack_no, FLAGS_SYN|FLAGS_ACK)
+            resp_segment_sum_fixed = fix_checksum(resp_segment, dst_addr, src_addr)
+
+            # Handshake aceitando a conexão
+            self.rede.enviar(resp_segment_sum_fixed, src_addr)
+
             if self.callback:
                 self.callback(conexao)
         elif id_conexao in self.conexoes:
@@ -60,11 +72,6 @@ class Conexao:
         print('Este é um exemplo de como fazer um timer')
 
     def _rdt_rcv(self, seq_no, ack_no, flags, payload):
-        print('ON _rdt_rcv @@@@@@@@@@@@@@')
-        print('seq_no', seq_no)
-        print('ack_no', ack_no)
-        print('flags', flags)
-        print('payload', payload)
         # TODO: trate aqui o recebimento de segmentos provenientes da camada de rede.
         # Chame self.callback(self, dados) para passar dados para a camada de aplicação após
         # garantir que eles não sejam duplicados e que tenham sido recebidos em ordem.
